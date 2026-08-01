@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SecureIoT"
+rootProject.name = "AetherAudit"
 include(":app")

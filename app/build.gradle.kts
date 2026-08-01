@@ -4,17 +4,17 @@ plugins {
 }
 
 android {
-    namespace = "com.example.secureiot"
+    namespace = "com.example.aetheraudit"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
 
     defaultConfig {
-        applicationId = "com.example.secureiot"
+        applicationId = "com.example.aetheraudit"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 

@@ -1,4 +1,4 @@
-package com.example.secureiot.ui.theme
+package com.example.aetheraudit.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

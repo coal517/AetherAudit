@@ -1,4 +1,4 @@
-package com.example.secureiot
+package com.example.aetheraudit
 
 import org.junit.Test
 

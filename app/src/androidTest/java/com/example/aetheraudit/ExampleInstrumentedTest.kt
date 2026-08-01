@@ -1,4 +1,4 @@
-package com.example.secureiot
+package com.example.aetheraudit
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

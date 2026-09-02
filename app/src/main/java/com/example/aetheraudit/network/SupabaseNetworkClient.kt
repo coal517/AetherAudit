@@ -11,8 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class SupabaseNetworkClient(
-    private val supabaseUrl: String = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co",
-    private val supabaseApiKey: String = "YOUR_SUPABASE_ANON_KEY"
+    private val supabaseUrl: String = "https://veextsfurygcyflznnvf.supabase.co",
+    private val supabaseApiKey: String = "sb_publishable_zr3TwD8ORIpKwI7fTt8ssQ_TS4hWImZ"
 ) {
     private val client = OkHttpClient()
     private val mediaType = "application/json; charset=utf-8".toMediaType()

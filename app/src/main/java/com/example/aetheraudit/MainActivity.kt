@@ -28,10 +28,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Instantiate the unified State ViewModel (The app's brain)
+                    // Instantiate the unified State ViewModel
                     val viewModel: AetherAuditViewModel = viewModel()
 
-                    // Boot directly into your main Active Radar & Logs dashboard UI!
+                    // Boot directly into your main Active Radar & Logs dashboard UI
                     AetherAuditDashboard(viewModel = viewModel)
                 }
             }
@@ -47,10 +47,10 @@ fun GreetingPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            // Instantiate the unified State ViewModel (The app's brain)
+            // Instantiate the unified State ViewModel
             val viewModel: AetherAuditViewModel = viewModel()
 
-            // Boot directly into your main Active Radar & Logs dashboard UI!
+            // Boot directly into your main Active Radar & Logs dashboard UI
             AetherAuditDashboard(viewModel = viewModel)
         }
     }

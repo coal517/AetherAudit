@@ -1,59 +1,94 @@
-**AetherAudit**  
-Bluetooth and BLE blue team defender app  
-**Getting started**  
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.  
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom!](#anchor-1 "#anchor-1")  
-**Add your files**  
-- [Create or ](#anchor-2 "#anchor-2")[upload files](#anchor-3 "#anchor-3")  
-- [Add files using the command line or push an existing Git repository with the following command:](#anchor-4 "#anchor-4")  
-cd existing_repo  
- git remote add origin https://gitlab.com/coal517/secureiot.git  
- git branch -M main  
- git push -uf origin main  
-   
-**Integrate with your tools**  
-- [Set up project integrations](https://gitlab.com/coal517/secureiot/-/settings/integrations "https://gitlab.com/coal517/secureiot/-/settings/integrations")  
-**Collaborate with your team**  
-- [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/ "https://docs.gitlab.com/user/project/members/")  
-- [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/ "https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/")  
-- [Automatically close issues from merge requests](#anchor-5 "#anchor-5")  
-- [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/ "https://docs.gitlab.com/user/project/merge_requests/approvals/")  
-- [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/ "https://docs.gitlab.com/user/project/merge_requests/auto_merge/")  
-**Test and Deploy**  
-Use the built-in continuous integration in GitLab.  
-- [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/ "https://docs.gitlab.com/ci/quick_start/")  
-- [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/ "https://docs.gitlab.com/user/application_security/sast/")  
-- [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/ "https://docs.gitlab.com/topics/autodevops/requirements/")  
-- [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/ "https://docs.gitlab.com/user/clusters/agent/")  
-- [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/ "https://docs.gitlab.com/ci/environments/protected_environments/")  
-![](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnEAAAACCAYAAAA3pIp+AAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAANklEQVR4nO3OQQmAABRAsScYxpg/h5VMYARvRrCCNxG2BFtmZquOAAD4i3Ot7mr/egIAwGvXA224BcUMk6pDAAAAAElFTkSuQmCC)  
-**Editing this README**  
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com for this template.](https://www.makeareadme.com/ "https://www.makeareadme.com/")  
-**Suggestions for a good README**  
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.  
-**Name**  
-Choose a self-explaining name for your project.  
-**Description**  
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.  
-**Badges**  
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.  
-**Visuals**  
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.  
-**Installation**  
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.  
-**Usage**  
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.  
-**Support**  
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.  
-**Roadmap**  
-If you have ideas for releases in the future, it is a good idea to list them in the README.  
-**Contributing**  
-State if you are open to contributions and what your requirements are for accepting them.  
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.  
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.  
-**Authors and acknowledgment**  
-Show your appreciation to those who have contributed to the project.  
-**License**  
-For open source projects, say how it is licensed.  
-**Project status**  
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.  
+# AetherAudit: Passive Wireless Infrastructure Scout
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Android SDK](https://img.shields.io/badge/SDK-26%2B-green.svg)](https://developer.android.com/)
+[![SDG Alignment](https://img.shields.io/badge/SDG-Goal%209%20%7C%20Target%209.1-cyan.svg)](https://sdgs.un.org/goals)
+
+AetherAudit is a sophisticated, offline-first passive wireless auditing tool built natively for Android using **Kotlin** and **Jetpack Compose**. The application acts as a digital perimeter blue-team defender, passively monitoring, mapping, and logging unpatched legacy Internet of Things (IoT) hardware and Bluetooth peripherals prone to high-severity protocol exploitation (specifically targeting vulnerability signatures of the unauthenticated Airoha RACE debugging protocol).
+
+Aligning with **UN SDG Goal 9: Industry, Innovation, and Infrastructure (Target 9.1: Sustainable & Resilient Infrastructure)**, AetherAudit provides site IT administrators, facility managers, and digital defense officers with physical-perimeter visibility to actively safeguard corporate networks, administrative facilities, and campuses against proximal over-the-air hijacking risks.
+
+---
+
+## 🛡️ Cybersecurity Context: The RACE Protocol Vulnerability
+
+Traditional network monitoring suites are completely blind to physical-perimeter wireless exposure. Bluetooth and Bluetooth Low Energy (BLE) systems-on-a-chip (SoCs) are highly privileged on host operating systems, making unpatched system-level firmware vulnerability a catastrophic entry point for enterprise intrusion.
+
+AetherAudit specifically audits against unauthenticated execution vulnerabilities in the **Airoha RACE (Robust Audio Connection Engine)** protocol, a proprietary debug framework natively embedded within millions of Bluetooth devices manufactured by industry leaders (including unpatched legacy models from Sony, JBL, Bose, Marshall, and Jabra).
+
+### Exploit Mechanics Checked (The Attack Vector Chain)
+1. **Unauthenticated Connection (CVE-2025-20700 & CVE-2025-20701):** Affected chipsets accept GATT (BLE) and RFCOMM (Classic) connections from any nearby host without enforcing standard cryptographic pairing or user interaction.
+2. **Exposure of Custom Protocol (CVE-2025-20702):** Once connected, the unauthenticated host has full access to the Airoha RACE debug utility.
+3. **Firmware and Memory Dump:** Attackers use RACE commands (`STORAGE_PAGE_READ` 0x0403 and `READ_ADDRESS` 0x1680) to dump volatile RAM contents and non-volatile flash partitions (such as the NVDM config block).
+4. **Link Key Hijacking & Identity Spoofing:** The flash partition contains the device's peer Bluetooth link keys. By exfiltrating these paired keys, an attacker can impersonate the trusted headphones directly to the victim’s paired phone, bypassing screen locks via the Hands-Free Profile (HFP) to intercept calls, trigger voice assistants, download contacts, or establish silent microphone audio streams.
+
+### AetherAudit's Defensive Design (Respecting the Android Sandbox)
+Standard Android operating systems prohibit third-party user applications from transmitting malformed packets or raw Host Controller Interface (HCI) commands. Intercepting or executing low-level over-the-air exploits directly in Kotlin is physically restricted by the Android system's security architecture.
+
+AetherAudit maps this threat landscape safely and passively:
+* **Manufacturer OUI Lookup:** The background engine passively scans public BLE advertisement packets. It extracts the first three bytes of the hardware address—the **Organizationally Unique Identifier (OUI)**—and cross-references them with the synchronized blacklist to identify vulnerable chipset vendors.
+* **Asynchronous RSSI Proximity Analysis:** Using real-time signal strength (RSSI), the app maps proximity. If an unpatched OUI device is detected within the immediate physical threat radius (RSSI > -65 dBm), the threat level escalates to **CRITICAL**, advising security teams of active spatial exposure.
+
+---
+
+## 🛠️ System Architecture & Data Flow
+
+AetherAudit utilizes a clean, modern Android architecture adhering strictly to **MVVM (Model-View-ViewModel)** guidelines with unidirectional data flow:
+
+```
+[Physical Peripherals] 
+      │ (BLE Advertisement Packets)
+      ▼
+[BleSecurityScanner] ──(Kotlin Flow Flow)──► [AetherAuditViewModel] ──(UiState)──► [Jetpack Compose UI]
+                                                   │
+                        ┌──────────────────────────┴──────────────────────────┐
+                        ▼ (Room SQLite - Local)                               ▼ (Supabase JSON API - Remote)
+                 [AetherAuditDatabase]                                  [Supabase Security Hub]
+```
+
+### 1. Unified Operator Authentication Gate
+The application enforces authentication using **Supabase GoTrue REST** endpoints. System logs cannot be transmitted to the remote database unless an operator holds verified credentials. To prevent client-side credential extraction, communication is lightweight and executes directly via optimized **OkHttp** calls, bypassing heavy SDK compilation dependencies.
+
+### 2. Double-Layer Sync Protocol
+* **Remote Pull (Vulnerability Blacklist):** Downloads master security signatures from Supabase PostgreSQL to the local SQLite database. Uses a flag (`isUserDefined = 0`) to distinguish remote definitions, preserving local user-defined manual overrides.
+* **Remote Push (Resilience Logs):** Asynchronously publishes physical perimeter scan records to the cloud. If network connectivity is lost, the scan persists offline within the local Room DB until a reconnection is established.
+
+---
+
+## 🚀 Installation & Build Requirements
+
+* **Operating System Support:** Android 8.0+ (API Level 26) up to Android 15.0 (API Level 35).
+* **Hardware Requirements:** Must be executed on a physical Android device. *Emulators do not natively support BLE scanning controllers.*
+* **Required Build Tools:**
+  * Android Studio Ladybug (or newer)
+  * Kotlin Gradle DSL with Version Catalog configuration (`libs.versions.toml`)
+  * Kotlin Symbol Processing (KSP) for Room compiler optimization
+  * JDK 17
+
+---
+
+## 📝 License
+
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+```
+Copyright (c) 2026 AetherAudit Dev Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

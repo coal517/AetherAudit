@@ -11,6 +11,9 @@ interface AetherAuditDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOUI(entry: LocalOUIEntry)
 
+    @Delete
+    suspend fun deleteOUI(entry: LocalOUIEntry)
+
     @Query("DELETE FROM local_oui_blacklist WHERE isUserDefined = 0")
     suspend fun clearRemoteSyncedOUIs()
 

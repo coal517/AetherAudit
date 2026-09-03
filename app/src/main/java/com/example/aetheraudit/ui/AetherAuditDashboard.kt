@@ -22,6 +22,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.aetheraudit.scanner.DiscoveredDevice
 import com.example.aetheraudit.scanner.ThreatLevel
 import com.example.aetheraudit.viewmodel.AetherAuditViewModel
+import com.example.aetheraudit.data.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,57 +30,66 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
     val state by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) } // 0 = Live Radar, 1 = Audit Log History, 2 = Blacklist Manager
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(containerColor = Color(0xFF0F172A)) {
-                NavigationBarItem(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    icon = { Text("📡") },
-                    label = { Text("Live Radar") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    icon = { Text("📁") },
-                    label = { Text("History logs") }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == 2,
-                    onClick = { selectedTab = 2 },
-                    icon = { Text("⚙️") },
-                    label = { Text("Blacklist Editor") }
-                )
-            }
-        },
-        containerColor = Color(0xFF020617)
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-        ) {
-            // Status Feed Banner
-            Box(
+    if (!state.isUserAuthenticated) {
+        AuthGateScreen(
+            statusMessage = state.statusMessage,
+            onLogin = { email, pass -> viewModel.authenticateUser(email, pass) },
+            onSignUp = { email, pass -> viewModel.registerUser(email, pass) }
+        )
+    } else {
+        Scaffold(
+            bottomBar = {
+                NavigationBar(containerColor = Color(0xFF0F172A)) {
+                    NavigationBarItem(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        icon = { Text("📡") },
+                        label = { Text("Live Radar") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        icon = { Text("📁") },
+                        label = { Text("History logs") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 2,
+                        onClick = { selectedTab = 2 },
+                        icon = { Text("⚙️") },
+                        label = { Text("Blacklist Editor") }
+                    )
+                }
+            },
+            containerColor = Color(0xFF020617)
+        ) { innerPadding ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF1E293B), RoundedCornerShape(8.dp))
-                    .padding(12.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
             ) {
-                Text(state.statusMessage, color = Color(0xFF94A3B8), fontSize = 12.sp)
-            }
+                // Status Feed Banner
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1E293B), RoundedCornerShape(8.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(state.statusMessage, color = Color(0xFF94A3B8), fontSize = 12.sp)
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            when (selectedTab) {
-                0 -> LiveRadarScreen(state.scannedDevices, state.isScanning, { viewModel.toggleScanning() }, { viewModel.recordThreatAndUpload(it) })
-                1 -> HistoryLogsScreen(state.auditLogs, { viewModel.searchLogs(it) })
-                2 -> BlacklistEditorScreen(
-                    state.localBlacklist,
-                    { viewModel.syncOUIBlacklistFromSupabase() },
-                    { oui, vendor, note -> viewModel.addManualOUIOverride(oui, vendor, note) }
-                )
+                when (selectedTab) {
+                    0 -> LiveRadarScreen(state.scannedDevices, state.isScanning, { viewModel.toggleScanning() }, { viewModel.recordThreatAndUpload(it) })
+                    1 -> HistoryLogsScreen(state.auditLogs, { viewModel.searchLogs(it) })
+                    2 -> BlacklistEditorScreen(
+                        state.localBlacklist,
+                        { viewModel.syncOUIBlacklistFromSupabase() },
+                        { oui, vendor, note -> viewModel.addManualOUIOverride(oui, vendor, note) },
+                        { entry -> viewModel.deleteManualOUI(entry) }
+                    )
+                }
             }
         }
     }
@@ -169,7 +179,7 @@ fun DeviceThreatCard(device: DiscoveredDevice, onSaveLog: (DiscoveredDevice) -> 
 }
 
 @Composable
-fun HistoryLogsScreen(auditLogs: List<com.example.aetheraudit.data.AuditLogEntry>, onSearch: (String) -> Unit) {
+fun HistoryLogsScreen(auditLogs: List<AuditLogEntry>, onSearch: (String) -> Unit) {
     var searchQuery by remember { mutableStateOf("") }
 
     Column {
@@ -212,9 +222,10 @@ fun HistoryLogsScreen(auditLogs: List<com.example.aetheraudit.data.AuditLogEntry
 
 @Composable
 fun BlacklistEditorScreen(
-    blacklist: List<com.example.aetheraudit.data.LocalOUIEntry>,
+    blacklist: List<LocalOUIEntry>,
     onSync: () -> Unit,
-    onAddManual: (String, String, String) -> Boolean
+    onAddManual: (String, String, String) -> Boolean,
+    onDeleteOUI: (LocalOUIEntry) -> Unit
 ) {
     var manualOUI by remember { mutableStateOf("") }
     var manualVendor by remember { mutableStateOf("") }
@@ -272,7 +283,7 @@ fun BlacklistEditorScreen(
             OutlinedTextField(
                 value = manualNote,
                 onValueChange = { manualNote = it },
-                label = { Text("Vulnerability Notes") },
+                label = { Text("Note") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
             )
@@ -306,58 +317,13 @@ fun BlacklistEditorScreen(
     ) {
         Text("Registered Blacklist Rules", color = Color.White, fontWeight = FontWeight.Bold)
 
-        Button(onClick = {showBlacklistDialog = true},
+        Button(onClick = {showBlacklistDialog = true}, modifier = Modifier.height(32.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
         ) {
             Text("VIEW (${blacklist.size})", color = Color.White)
         }
     }
 
-    Spacer(modifier = Modifier.height(8.dp))
-
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(blacklist.take(3)) { entry ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF0F172A), RoundedCornerShape(4.dp))
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(entry.oui, color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold)
-                    Text(entry.vendorName, color = Color.White, fontSize = 13.sp)
-                    Text(entry.vulnerabilityDetails, color = Color(0xFF94A3B8), fontSize = 11.sp)
-                }
-                if (entry.isUserDefined) {
-                    Text(
-                        "LOCAL OVERRIDE",
-                        color = Color(0xFFF59E0B),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                } else {
-                    Text(
-                        "SYNCED CLOUD",
-                        color = Color(0xFF10B981),
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-
-        if (blacklist.size > 3) {
-            item {
-                Text("+ ${blacklist.size - 3} more entries...",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-
-            }
-        }
-    }
-    // Dialog Box
     if (showBlacklistDialog) {
         Dialog(
             onDismissRequest = { showBlacklistDialog = false },
@@ -434,13 +400,16 @@ fun BlacklistEditorScreen(
                                 }
 
                                 if (entry.isUserDefined) {
-                                    Text(
-                                        "LOCAL OVERRIDE",
-                                        color = Color(0xFFF59E0B),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            "LOCAL OVERRIDE", color = Color(0xFFF59E0B),
+                                            fontSize = 10.sp, fontWeight = FontWeight.Bold
+                                        )
+                                        Button(
+                                            onClick = { onDeleteOUI(entry) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                                        ) { Text("DELETE", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                                    }
                                 } else {
                                     Text(
                                         "SYNCED CLOUD",
@@ -469,6 +438,66 @@ fun BlacklistEditorScreen(
     }
 }
 
+@Composable
+fun AuthGateScreen(
+    statusMessage: String,
+    onLogin: (String, String) -> Unit,
+    onSignUp: (String, String) -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF020617))
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("SECURE OPERATOR GATEWAY", color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold, fontSize = 18.sp, letterSpacing = 2.sp)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("Perimeter Scout Authentication required to push remote logs.", color = Color(0xFF64748B), fontSize = 12.sp)
 
+                Spacer(modifier = Modifier.height(16.dp))
 
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Operator Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Access Key") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(statusMessage, color = Color(0xFF94A3B8), fontSize = 11.sp)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(onClick = { onSignUp(email, password) }) {
+                        Text("REGISTER PROFILE", color = Color(0xFF94A3B8))
+                    }
+                    Button(onClick = { onLogin(email, password) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7))) {
+                        Text("AUTHORIZE", color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+}

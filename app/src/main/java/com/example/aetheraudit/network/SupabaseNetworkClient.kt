@@ -17,6 +17,50 @@ class SupabaseNetworkClient(
     private val client = OkHttpClient()
     private val mediaType = "application/json; charset=utf-8".toMediaType()
 
+    suspend fun loginWithEmail(email: String, password: String): Boolean = withContext(Dispatchers.IO) {
+        val jsonPayload = JSONObject().apply {
+            put("email", email)
+            put("password", password)
+        }.toString()
+
+        val request = Request.Builder()
+            .url("$supabaseUrl/auth/v1/token?grant_type=password")
+            .addHeader("apikey", supabaseApiKey)
+            .addHeader("Content-Type", "application/json")
+            .post(jsonPayload.toRequestBody(mediaType))
+            .build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun signUpWithEmail(email: String, password: String): Boolean = withContext(Dispatchers.IO) {
+        val jsonPayload = JSONObject().apply {
+            put("email", email)
+            put("password", password)
+        }.toString()
+
+        val request = Request.Builder()
+            .url("$supabaseUrl/auth/v1/signup")
+            .addHeader("apikey", supabaseApiKey)
+            .addHeader("Content-Type", "application/json")
+            .post(jsonPayload.toRequestBody(mediaType))
+            .build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     // Download vulnerable OUI Master List
     suspend fun fetchMasterBlacklist(): List<LocalOUIEntry> = withContext(Dispatchers.IO) {
         val request = Request.Builder()

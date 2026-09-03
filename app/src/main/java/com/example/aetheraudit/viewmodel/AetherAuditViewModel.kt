@@ -17,7 +17,9 @@ data class UiState(
     val scannedDevices: List<DiscoveredDevice> = emptyList(),
     val localBlacklist: List<LocalOUIEntry> = emptyList(),
     val auditLogs: List<AuditLogEntry> = emptyList(),
-    val statusMessage: String = "Engine Idle. Ready to audit physical perimeter."
+    val statusMessage: String = "Engine Idle. Ready to audit physical perimeter.",
+    val isUserAuthenticated: Boolean = false,
+    val currentUserEmail: String = ""
 )
 
 class AetherAuditViewModel(application: Application) : AndroidViewModel(application) {
@@ -51,6 +53,34 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
                 _uiState.update { it.copy(auditLogs = logs) }
             }
         }
+    }
+
+    fun authenticateUser(email: String, password: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(statusMessage = "Verifying operator credentials...") }
+            val success = networkClient.loginWithEmail(email, password)
+            if (success) {
+                _uiState.update { it.copy(isUserAuthenticated = true, currentUserEmail = email, statusMessage = "Authorized. Perimeter scans unlocked.") }
+            } else {
+                _uiState.update { it.copy(statusMessage = "Authentication failed. Invalid security keys.") }
+            }
+        }
+    }
+
+    fun registerUser(email: String, password: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(statusMessage = "Registering operator secure profile...") }
+            val success = networkClient.signUpWithEmail(email, password)
+            if (success) {
+                _uiState.update { it.copy(statusMessage = "Account registered! You can now authenticate.") }
+            } else {
+                _uiState.update { it.copy(statusMessage = "Registration failed. Choose robust credentials.") }
+            }
+        }
+    }
+
+    fun logoutUser() {
+        _uiState.update { it.copy(isUserAuthenticated = false, currentUserEmail = "", statusMessage = "Operator logged out. Perimeter locked.") }
     }
 
     fun toggleScanning() {
@@ -135,6 +165,13 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
             dao.insertOUI(entry)
         }
         return true
+    }
+
+    fun deleteManualOUI(entry: LocalOUIEntry) {
+        viewModelScope.launch {
+            dao.deleteOUI(entry)
+            _uiState.update { it.copy(statusMessage = "Removed OUI Override: ${entry.oui}") }
+        }
     }
 
     fun searchLogs(query: String) {

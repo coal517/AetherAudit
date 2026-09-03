@@ -7,14 +7,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -39,7 +43,7 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
     } else {
         Scaffold(
             bottomBar = {
-                NavigationBar(containerColor = Color(0xFF0F172A)) {
+                NavigationBar(containerColor = Color(0xFF0F172A), contentColor = Color.White) {
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
@@ -196,7 +200,7 @@ fun HistoryLogsScreen(auditLogs: List<AuditLogEntry>, onSearch: (String) -> Unit
                 searchQuery = it
                 onSearch(it)
             },
-            placeholder = { Text("Search local security logs...") },
+            placeholder = { Text("Search local security logs...", color = Color(0xFF99CCFF)) },
             modifier = Modifier.fillMaxWidth(),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xFF1E293B),
@@ -246,11 +250,21 @@ fun BlacklistEditorScreen(
                 "Vulnerability\nDictionary", color = Color.White,
                 fontSize = 18.sp, fontWeight = FontWeight.Bold
             )
-            Button(
+            TextButton(
                 onClick = onSync,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
             ) {
-                Text("SYNC WITH CLOUD", color = Color.White)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Sync Icon",
+                        tint = Color.White
+                    )
+                    Text("CLOUD SYNC", color = Color.White)
+                }
             }
         }
     }
@@ -269,7 +283,7 @@ fun BlacklistEditorScreen(
             OutlinedTextField(
                 value = manualOUI,
                 onValueChange = { manualOUI = it; inputError = false },
-                label = { Text("Target OUI (format: AA:BB:CC)") },
+                label = { Text("Target OUI (format: AA:BB:CC)", color = Color(0xFF99CCFF)) },
                 isError = inputError,
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults
@@ -282,7 +296,7 @@ fun BlacklistEditorScreen(
             OutlinedTextField(
                 value = manualVendor,
                 onValueChange = { manualVendor = it },
-                label = { Text("Hardware Vendor Name") },
+                label = { Text("Hardware Vendor Name", color = Color(0xFF99CCFF)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
             )
@@ -290,7 +304,7 @@ fun BlacklistEditorScreen(
             OutlinedTextField(
                 value = manualNote,
                 onValueChange = { manualNote = it },
-                label = { Text("Note") },
+                label = { Text("Note", color = Color(0xFF99CCFF)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
             )
@@ -324,7 +338,7 @@ fun BlacklistEditorScreen(
     ) {
         Text("Registered Blacklist Rules", color = Color.White, fontWeight = FontWeight.Bold)
 
-        Button(onClick = {showBlacklistDialog = true}, modifier = Modifier.height(32.dp),
+        Button(onClick = {showBlacklistDialog = true}, modifier = Modifier.height(36.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
         ) {
             Text("VIEW (${blacklist.size})", color = Color.White)
@@ -340,39 +354,20 @@ fun BlacklistEditorScreen(
             )
         ) {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .fillMaxHeight(0.8f),
+                modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.8f),
                 shape = RoundedCornerShape(16.dp),
                 color = Color(0xFF0F172A),
                 shadowElevation = 8.dp
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
+                    modifier = Modifier.fillMaxSize().padding(16.dp)
                 ) {
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Registered Blacklist Rules (${blacklist.size} entries)",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        IconButton(onClick = { showBlacklistDialog = false }) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Close",
-                                tint = Color.White
-                            )
-                        }
-                    }
+                    Text(
+                        "Registered Blacklist Rules (${blacklist.size} entries)",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -435,9 +430,9 @@ fun BlacklistEditorScreen(
                     Button(
                         onClick = { showBlacklistDialog = false },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155))
                     ) {
-                        Text("CLOSE", color = Color.White)
+                        Text("Close", color = Color.White)
                     }
                 }
             }
@@ -455,10 +450,7 @@ fun AuthGateScreen(
     var password by remember { mutableStateOf("") }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF020617))
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize().background(Color(0xFF020617)).padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Card(
@@ -475,9 +467,11 @@ fun AuthGateScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Operator Email") },
+                    label = { Text("Operator Email", color = Color(0xFF99CCFF)) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -485,9 +479,11 @@ fun AuthGateScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Access Key") },
+                    label = { Text("Access Key", color = Color(0xFF99CCFF)) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -550,11 +546,10 @@ fun AboutScreen() {
         )
 
         // Divider
-        Divider(
-            color = Color(0xFF1E293B),
+        HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth(0.6f)
-                .padding(vertical = 8.dp)
+                .padding(vertical = 8.dp), thickness = DividerDefaults.Thickness, color = Color(0xFF1E293B)
         )
 
         // About Section
@@ -567,7 +562,7 @@ fun AboutScreen() {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    "📋 About Us",
+                    "📋 About",
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold

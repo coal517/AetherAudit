@@ -58,6 +58,12 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                         icon = { Text("⚙️") },
                         label = { Text("Blacklist Editor") }
                     )
+                    NavigationBarItem(
+                        selected = selectedTab ==3,
+                        onClick = { selectedTab = 3},
+                        icon = { Text("ℹ️") },
+                        label = { Text("About Us")}
+                    )
                 }
             },
             containerColor = Color(0xFF020617)
@@ -89,6 +95,7 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                         { oui, vendor, note -> viewModel.addManualOUIOverride(oui, vendor, note) },
                         { entry -> viewModel.deleteManualOUI(entry) }
                     )
+                    3 -> AboutScreen()
                 }
             }
         }
@@ -499,5 +506,121 @@ fun AuthGateScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AboutScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    Color(0xFF1E293B),
+                    RoundedCornerShape(24.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "🛡️",
+                fontSize = 60.sp
+            )
+        }
+
+        // App Name
+        Text(
+            "Aether Audit",
+            color = Color.White,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp
+        )
+
+        // Version
+        Text(
+            "Version 0.1.0",
+            color = Color(0xFF94A3B8),
+            fontSize = 14.sp
+        )
+
+        // Divider
+        Divider(
+            color = Color(0xFF1E293B),
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .padding(vertical = 8.dp)
+        )
+
+        // About Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "📋 About Us",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "Aether Audit is a sophisticated BLE security scanning application designed for perimeter security assessment and vulnerability detection.",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 13.sp,
+                    lineHeight = 20.sp
+                )
+            }
+        }
+
+        // Features Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "⚡ Key Features",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                FeatureItem("📡", "Real-time BLE device scanning")
+                FeatureItem("🔍", "OUI-based vulnerability detection")
+                FeatureItem("☁️", "Cloud sync with Supabase")
+                FeatureItem("📊", "Threat logging and history")
+                FeatureItem("⚙️", "Customizable blacklist rules")
+                FeatureItem("🔐", "Secure operator authentication")
+            }
+        }
+    }
+}
+
+@Composable
+fun FeatureItem(icon: String, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            icon,
+            fontSize = 16.sp
+        )
+        Text(
+            text,
+            color = Color(0xFFCBD5E1),
+            fontSize = 13.sp
+        )
     }
 }

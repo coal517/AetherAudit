@@ -3,9 +3,12 @@ package com.example.aetheraudit.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.aetheraudit.scanner.DiscoveredDevice
 import com.example.aetheraudit.scanner.ThreatLevel
 import com.example.aetheraudit.viewmodel.AetherAuditViewModel
@@ -25,7 +30,7 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
     var selectedTab by remember { mutableStateOf(0) } // 0 = Live Radar, 1 = Audit Log History, 2 = Blacklist Manager
 
     Scaffold(
-        topBar = {
+        /*topBar = {
             TopAppBar(
                 title = { Text("AETHER AUDIT // Passive Scout", fontWeight = FontWeight.Bold, letterSpacing = 2.sp) },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -33,7 +38,7 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                     titleContentColor = Color(0xFF38BDF8)
                 )
             )
-        },
+        },*/
         bottomBar = {
             NavigationBar(containerColor = Color(0xFF0F172A)) {
                 NavigationBarItem(
@@ -224,14 +229,26 @@ fun BlacklistEditorScreen(
     var manualVendor by remember { mutableStateOf("") }
     var manualNote by remember { mutableStateOf("") }
     var inputError by remember { mutableStateOf(false) }
+    var showBlacklistDialog by remember { mutableStateOf(false) }
 
-    Column {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Vulnerability Dictionary", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Button(onClick = onSync, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))) {
-                Text("SYNC WITH CLOUD", color = Color.White)
-            }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Vulnerability Dictionary",
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Button(
+            onClick = onSync,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+        ) {
+            Text("SYNC WITH CLOUD", color = Color.White)
         }
+    }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -250,10 +267,10 @@ fun BlacklistEditorScreen(
                     label = { Text("Target OUI (format: AA:BB:CC)") },
                     isError = inputError,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White, errorTextColor = Color.Red)
                 )
                 if (inputError) {
-                    Text("Invalid OUI format! Use exact XX:XX:XX hexadecimal format.", color = Color.Red, fontSize = 11.sp)
+                    Text("Invalid OUI format! Use the exact XX:XX:XX hexadecimal format.", color = Color.Red, fontSize = 11.sp)
                 }
 
                 OutlinedTextField(
@@ -292,13 +309,27 @@ fun BlacklistEditorScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-        Text("Registered Blacklist Rules (${blacklist.size} entries)", color = Color.White, fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Registered Blacklist Rules (${blacklist.size} entries)", color = Color.White, fontWeight = FontWeight.Bold)
+
+            Button(onClick = {showBlacklistDialog = true},
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6)),
+                modifier = Modifier.height(32.dp)
+            ) {
+                Text("VIEW", color = Color.White, fontSize = 12.sp, )
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(blacklist) { entry ->
+            items(blacklist.take(3)) { entry ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -312,12 +343,145 @@ fun BlacklistEditorScreen(
                         Text(entry.vulnerabilityDetails, color = Color(0xFF94A3B8), fontSize = 11.sp)
                     }
                     if (entry.isUserDefined) {
-                        Text("LOCAL OVERRIDE", color = Color(0xFFF59E0B), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "LOCAL OVERRIDE",
+                            color = Color(0xFFF59E0B),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     } else {
-                        Text("SYNCED CLOUD", color = Color(0xFF10B981), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "SYNCED CLOUD",
+                            color = Color(0xFF10B981),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            if (blacklist.size > 3) {
+                item {
+                    Text("+ ${blacklist.size - 3} more entries...",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+
+                }
+            }
+        }
+    // Dialog Box
+    if (showBlacklistDialog) {
+        Dialog(
+            onDismissRequest = { showBlacklistDialog = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false
+            )
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .fillMaxHeight(0.8f),
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xFF0F172A),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Registered Blacklist Rules (${blacklist.size} entries)",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        IconButton(onClick = { showBlacklistDialog = false }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(blacklist) { entry ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF1E293B), RoundedCornerShape(8.dp))
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        entry.oui,
+                                        color = Color(0xFF38BDF8),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        entry.vendorName,
+                                        color = Color.White,
+                                        fontSize = 13.sp
+                                    )
+                                    Text(
+                                        entry.vulnerabilityDetails,
+                                        color = Color(0xFF94A3B8),
+                                        fontSize = 11.sp
+                                    )
+                                }
+
+                                if (entry.isUserDefined) {
+                                    Text(
+                                        "LOCAL OVERRIDE",
+                                        color = Color(0xFFF59E0B),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        "SYNCED CLOUD",
+                                        color = Color(0xFF10B981),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(start = 8.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = { showBlacklistDialog = false },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
+                    ) {
+                        Text("CLOSE", color = Color.White)
                     }
                 }
             }
         }
     }
 }
+
+
+
+

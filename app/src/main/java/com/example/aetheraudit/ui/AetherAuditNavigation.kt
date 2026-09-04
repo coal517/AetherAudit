@@ -162,6 +162,14 @@ fun AetherAuditNavigation(viewModel: AetherAuditViewModel) {
                     Text("2. Enable GPS Location services (Android security sandboxes require location to access nearby Bluetooth beacon payloads safely).", color = Color.White)
                     Text("3. Grant the Bluetooth Scan and Location permissions when requested by the application.", color = Color.White)
                     Text("4. Tap START RADAR to initiate background scanning immediately.", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF334155)))
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text("⚠️ Technical Note on Initialization:", fontWeight = FontWeight.SemiBold, color = Color(0xFFF59E0B), fontSize = 11.sp)
+                    Text("If Bluetooth is toggled ON while AetherAudit is already running, Android's hardware daemon requires 5-10 seconds to fully initialize the antenna. During this boot phase, the app may miss initial peripheral advertisement intervals. For maximum sensitivity, we strongly recommend enabling Bluetooth BEFORE launching the app.",
+                        color = Color(0xFF94A3B8), fontSize = 11.sp, lineHeight = 16.sp)
                 }
             },
             confirmButton = {

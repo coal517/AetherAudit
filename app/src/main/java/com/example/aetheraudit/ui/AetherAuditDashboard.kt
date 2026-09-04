@@ -6,15 +6,15 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -68,6 +69,7 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
     var showLogoutConfirm by remember { mutableStateOf(false) }
     var showDeleteAccountConfirm by remember { mutableStateOf(false) }
     var entryToDelete by remember { mutableStateOf<LocalOUIEntry?>(null) }
+    var showTutorialDialog by remember { mutableStateOf(false) }
 
     if (!state.isUserAuthenticated) {
         AuthGateScreen(
@@ -83,26 +85,30 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
-                        icon = { Text("📡") },
-                        label = { Text("Live Radar", color = Color.White) }
+                        icon = { Icon(imageVector = Icons.Default.Search, contentDescription = "Radar", tint = Color.White) },
+                        label = { Text("Live Radar", color = Color.White, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF0284C7))
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
-                        icon = { Text("📁") },
-                        label = { Text("History logs", color = Color.White) }
+                        icon = { Icon(imageVector = Icons.Default.Menu, contentDescription = "History", tint = Color.White) },
+                        label = { Text("History logs", color = Color.White, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF0284C7))
                     )
                     NavigationBarItem(
                         selected = selectedTab == 2,
                         onClick = { selectedTab = 2 },
-                        icon = { Text("⚙️") },
-                        label = { Text("Blacklist Editor", color = Color.White) }
+                        icon = { Icon(imageVector = Icons.Default.Build, contentDescription = "Blacklist", tint = Color.White) },
+                        label = { Text("Blacklist Editor", color = Color.White, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF0284C7))
                     )
                     NavigationBarItem(
-                        selected = selectedTab ==3,
-                        onClick = { selectedTab = 3},
-                        icon = { Text("🔒️") },
-                        label = { Text("Operator Panel", color = Color.White)}
+                        selected = selectedTab == 3,
+                        onClick = { selectedTab = 3 },
+                        icon = { Icon(imageVector = Icons.Default.AccountCircle, contentDescription = "Operator", tint = Color.White) },
+                        label = { Text("Operator Panel", color = Color.White, fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFF0284C7))
                     )
                 }
             },
@@ -131,14 +137,15 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                         scannedDevices = state.scannedDevices,
                         isScanning = state.isScanning,
                         onToggleScan = { viewModel.toggleScanning() },
-                        onSaveLog = { viewModel.recordThreatAndUpload(it) }
+                        onSaveLog = { viewModel.recordThreatAndUpload(it) },
+                        onTutorialClick = { showTutorialDialog = true }
                     )
                     1 -> HistoryLogsScreen(state.auditLogs, { viewModel.searchLogs(it) })
                     2 -> BlacklistEditorScreen(
-                        state.localBlacklist,
-                        { viewModel.syncOUIBlacklistFromSupabase() },
-                        { oui, vendor, note -> viewModel.addManualOUIOverride(oui, vendor, note) },
-                        { entry -> entryToDelete = entry }
+                        blacklist = state.localBlacklist,
+                        onSync = { viewModel.syncOUIBlacklistFromSupabase() },
+                        onAddManual = { oui, vendor, note -> viewModel.addManualOUIOverride(oui, vendor, note) },
+                        onDeleteOUI = { entry -> entryToDelete = entry }
                     )
                     3 -> OperatorPanelScreen(
                         operatorEmail = state.currentUserEmail,
@@ -150,7 +157,38 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
         }
     }
 
-    // 1. CONFIRM DELETION OF LOCAL OVERRIDE DIALOG
+    // 1. TUTORIAL DIALOG [User Query]
+    if (showTutorialDialog) {
+        AlertDialog(
+            onDismissRequest = { showTutorialDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = Color(0xFF38BDF8))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Pre-requisite Scanner Instructions", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Follow these critical steps to start auditing physical hardware:", color = Color.White)
+                    Text("1. Turn ON your device's Bluetooth in the Android quick-settings bar.", fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8))
+                    Text("2. Enable GPS Location services (Android security sandboxes require location to access nearby Bluetooth beacon payloads safely).", color = Color.White)
+                    Text("3. Grant the Bluetooth Scan and Location permissions when requested by the application.", color = Color.White)
+                    Text("4. Tap START RADAR to initiate background scanning immediately.", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showTutorialDialog = false }) {
+                    Text("UNDERSTOOD")
+                }
+            },
+            containerColor = Color(0xFF0F172A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White
+        )
+    }
+
+    // 2. CONFIRM DELETION OF LOCAL OVERRIDE DIALOG [17]
     entryToDelete?.let { entry ->
         AlertDialog(
             onDismissRequest = { entryToDelete = null },
@@ -183,11 +221,13 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                     Text("CANCEL")
                 }
             },
-            containerColor = Color(0xFF99CCFF)
+            containerColor = Color(0xFF0F172A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White
         )
     }
 
-    // 2. CONFIRM LOGOUT DIALOG
+    // 3. CONFIRM LOGOUT DIALOG
     if (showLogoutConfirm) {
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
@@ -209,11 +249,13 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                     Text("CANCEL")
                 }
             },
-            containerColor = Color(0xFF99CCFF)
+            containerColor = Color(0xFF0F172A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White
         )
     }
 
-    // 3. CONFIRM DELETE ACCOUNT DIALOG
+    // 4. CONFIRM DELETE ACCOUNT DIALOG
     if (showDeleteAccountConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteAccountConfirm = false },
@@ -235,7 +277,9 @@ fun AetherAuditDashboard(viewModel: AetherAuditViewModel) {
                     Text("CANCEL")
                 }
             },
-            containerColor = Color(0xFF99CCFF)
+            containerColor = Color(0xFF0F172A),
+            titleContentColor = Color.White,
+            textContentColor = Color.White
         )
     }
 }
@@ -245,7 +289,8 @@ fun LiveRadarScreen(
     scannedDevices: List<DiscoveredDevice>,
     isScanning: Boolean,
     onToggleScan: () -> Unit,
-    onSaveLog: (DiscoveredDevice) -> Unit
+    onSaveLog: (DiscoveredDevice) -> Unit,
+    onTutorialClick: () -> Unit
 ) {
     Column {
         Row(
@@ -253,8 +298,19 @@ fun LiveRadarScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Perimeter Scan Data", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            TextButton(
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Perimeter Scan Data", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.width(6.dp))
+                IconButton(onClick = onTutorialClick, modifier = Modifier.size(24.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Show Scanner Guide",
+                        tint = Color(0xFF38BDF8),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+            Button(
                 onClick = onToggleScan,
                 colors = ButtonDefaults.buttonColors(containerColor = if (isScanning) Color.Red else Color(0xFF0284C7))
             ) {
@@ -401,173 +457,178 @@ fun BlacklistEditorScreen(
                 }
             }
         }
-    }
 
-    Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-    // Manual Entry Card (Input Validation Demo for Rubrics)
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("Add Local Custom OUI Threat Override", color = Color.White, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+        // Manual Entry Card (Input Validation Demo for Rubrics)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Add Local Custom OUI Threat Override", color = Color.White, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = manualOUI,
-                onValueChange = { input->
-                    // Hitting strict character constraints
-                    if (input.length <= 8) {
-                        manualOUI = input
-                        inputError = false
-                    }
-                },
-                label = { Text("Target OUI (format: AA:BB:CC)", color = Color(0xFF99CCFF)) },
-                isError = inputError,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults
-                    .colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White, errorTextColor = Color.Red)
-            )
-            if (inputError) {
-                Text("Invalid OUI format! Use the exact XX:XX:XX hexadecimal format.", color = Color.Red, fontSize = 11.sp)
-            }
+                OutlinedTextField(
+                    value = manualOUI,
+                    onValueChange = { input ->
+                        if (input.length <= 8) {
+                            manualOUI = input
+                            inputError = false
+                        }
+                    },
+                    label = { Text("Target OUI (format: AA:BB:CC)", color = Color(0xFF99CCFF)) },
+                    isError = inputError,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        errorTextColor = Color.Red
+                    )
+                )
+                if (inputError) {
+                    Text("Invalid OUI format! Use the exact XX:XX:XX hexadecimal format.", color = Color.Red, fontSize = 11.sp)
+                }
 
-            OutlinedTextField(
-                value = manualVendor,
-                onValueChange = { input ->
-                    if (input.length <= 35) manualVendor = input
-                },
-                label = { Text("Hardware Vendor Name", color = Color(0xFF99CCFF)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
-            )
+                OutlinedTextField(
+                    value = manualVendor,
+                    onValueChange = { input ->
+                        if (input.length <= 35) manualVendor = input
+                    },
+                    label = { Text("Hardware Vendor Name", color = Color(0xFF99CCFF)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
 
-            OutlinedTextField(
-                value = manualNote,
-                onValueChange = { input ->
+                OutlinedTextField(
+                    value = manualNote,
+                    onValueChange = { input ->
                         if (input.length <= 60) manualNote = input
                     },
-                label = { Text("Note", color = Color(0xFF99CCFF)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
-            )
+                    label = { Text("Note", color = Color(0xFF99CCFF)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White)
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Button(
-                onClick = {
-                    val success = onAddManual(manualOUI, manualVendor, manualNote)
-                    if (success) {
-                        manualOUI = ""
-                        manualVendor = ""
-                        manualNote = ""
-                    } else {
-                        inputError = true
-                    }
-                },
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Text("ADD LOCAL BLACKLIST ENTRY")
+                Button(
+                    onClick = {
+                        val success = onAddManual(manualOUI, manualVendor, manualNote)
+                        if (success) {
+                            manualOUI = ""
+                            manualVendor = ""
+                            manualNote = ""
+                        } else {
+                            inputError = true
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("ADD LOCAL BLACKLIST ENTRY")
+                }
             }
         }
-    }
 
-    Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Registered Blacklist Rules", color = Color.White, fontWeight = FontWeight.Bold)
-
-        TextButton(onClick = {showBlacklistDialog = true}, modifier = Modifier.height(36.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("VIEW (${blacklist.size})", color = Color.White)
-        }
-    }
+            Text("Registered Blacklist Rules", color = Color.White, fontWeight = FontWeight.Bold)
 
-    if (showBlacklistDialog) {
-        Dialog(
-            onDismissRequest = { showBlacklistDialog = false },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
-            )
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.8f),
-                shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF0F172A),
-                shadowElevation = 8.dp
+            TextButton(
+                onClick = { showBlacklistDialog = true },
+                modifier = Modifier.height(36.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
             ) {
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp)
+                Text("VIEW (${blacklist.size})", color = Color.White)
+            }
+        }
+
+        if (showBlacklistDialog) {
+            Dialog(
+                onDismissRequest = { showBlacklistDialog = false },
+                properties = DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
+                )
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.8f),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFF0F172A),
+                    shadowElevation = 8.dp
                 ) {
-                    Text(
-                        "Registered Blacklist Rules (${blacklist.size} entries)",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f)
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(16.dp)
                     ) {
-                        items(blacklist) { entry ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFF1E293B), RoundedCornerShape(8.dp))
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(entry.oui, color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold)
-                                    Text(entry.vendorName, color = Color.White, fontSize = 13.sp)
-                                    Text(entry.vulnerabilityDetails, color = Color(0xFF94A3B8), fontSize = 11.sp)
-                                }
+                        Text(
+                            "Registered Blacklist Rules (${blacklist.size} entries)",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
 
-                                if (entry.isUserDefined) {
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text(
-                                            "LOCAL OVERRIDE", color = Color(0xFFF59E0B),
-                                            fontSize = 10.sp, fontWeight = FontWeight.Bold
-                                        )
-                                        TextButton(
-                                            onClick = { onDeleteOUI(entry) },
-                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444))
-                                        ) {
-                                            Text("DELETE", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            items(blacklist) { entry ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF1E293B), RoundedCornerShape(8.dp))
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(entry.oui, color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold)
+                                        Text(entry.vendorName, color = Color.White, fontSize = 13.sp)
+                                        Text(entry.vulnerabilityDetails, color = Color(0xFF94A3B8), fontSize = 11.sp)
                                     }
-                                } else {
-                                    Text(
-                                        "SYNCED CLOUD",
-                                        color = Color(0xFF10B981),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(start = 8.dp)
-                                    )
+
+                                    if (entry.isUserDefined) {
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text(
+                                                "LOCAL OVERRIDE", color = Color(0xFFF59E0B),
+                                                fontSize = 10.sp, fontWeight = FontWeight.Bold
+                                            )
+                                            Button(
+                                                onClick = { onDeleteOUI(entry) },
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444)),
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                                modifier = Modifier.height(28.dp)
+                                            ) {
+                                                Text("DELETE", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    } else {
+                                        Text(
+                                            "SYNCED CLOUD",
+                                            color = Color(0xFF10B981),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    Button(
-                        onClick = { showBlacklistDialog = false },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155))
-                    ) {
-                        Text("Close", color = Color.White)
+                        Button(
+                            onClick = { showBlacklistDialog = false },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF334155))
+                        ) {
+                            Text("Close", color = Color.White)
+                        }
                     }
                 }
             }
@@ -605,7 +666,7 @@ fun AuthGateScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { input ->
-                        // Validation checks: Forbid using spaces, limit characters [CLO2 Quality of work]
+                        // Validation checks: Forbid spaces, limit length
                         if (input.length <= 35 && !input.contains(" ")) {
                             email = input
                         }
@@ -622,7 +683,7 @@ fun AuthGateScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { input ->
-                        // Validation checks: Forbid using spaces, limit characters [CLO2 Quality of work]
+                        // Validation checks: Forbid spaces, limit length
                         if (input.length <= 20 && !input.contains(" ")) {
                             password = input
                         }
@@ -632,25 +693,34 @@ fun AuthGateScreen(
                     colors = OutlinedTextFieldDefaults.colors(focusedTextColor = Color.White, unfocusedTextColor = Color.White),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true,
-                    // Secure Password Field asterisks transformation
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        // Dynamic touch hold-to-reveal password action
-                        IconButton(
-                            onClick = {
-                                Toast.makeText(context, "Hold down button to reveal password", Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.pointerInput(Unit) {
-                                detectTapGestures(
-                                    onPress = {
-                                        isPasswordVisible = true
-                                        tryAwaitRelease()
-                                        isPasswordVisible = false
-                                    }
-                                )
-                            }
+                        // Fixes Touch-Hold Reveal action cleanly with pointers + Toast hint [User Query]
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onPress = {
+                                            isPasswordVisible = true
+                                            try {
+                                                awaitRelease()
+                                            } finally {
+                                                isPasswordVisible = false
+                                            }
+                                        },
+                                        onTap = {
+                                            Toast.makeText(context, "Hold down button to reveal password", Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(if (isPasswordVisible) "🔓" else "👁️", fontSize = 16.sp)
+                            Icon(
+                                imageVector = if (isPasswordVisible) Icons.Default.Info else Icons.Default.Lock,
+                                contentDescription = "Reveal Access Key",
+                                tint = Color(0xFF99CCFF)
+                            )
                         }
                     }
                 )
@@ -690,26 +760,35 @@ fun OperatorPanelScreen(
         item {
             Box(
                 modifier = Modifier
-                    .size(100.dp)
-                    .background(Color(0xFF1E293B), RoundedCornerShape(24.dp)),
+                    .size(80.dp)
+                    .background(Color(0xFF1E293B), RoundedCornerShape(20.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("🛡️", fontSize = 50.sp)
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Shield Equivalent",
+                    modifier = Modifier.size(40.dp),
+                    tint = Color(0xFF38BDF8)
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text("AETHER AUDIT", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            Text("Version 0.1.1", color = Color(0xFF94A3B8), fontSize = 14.sp)
+            Text("Version 0.1.2", color = Color(0xFF94A3B8), fontSize = 14.sp)
         }
 
-        // Active Profile Management Module [CLO2 Development of mobile solution]
+        // Active Profile Management Module
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("🔒 Active Operator Details", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Active Operator Details", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text("Identity: $operatorEmail", color = Color(0xFF38BDF8), fontSize = 13.sp)
                     Text("Authority: Secure blue-team physical auditor", color = Color(0xFF94A3B8), fontSize = 12.sp)
 
@@ -735,15 +814,19 @@ fun OperatorPanelScreen(
             }
         }
 
-        // Academic Documentation Section
+        // Cyber-Resilience Manifesto [UN SDG Goal 9]
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("📋 Cyber-Resilience Manifesto", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cyber-Resilience Manifesto", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "Aligning with UN Sustainable Development Goal 9 (Industry, Innovation, and Infrastructure), " +
                         "AetherAudit maps nearby physical space to passively find and log vulnerable legacy hardware configurations " +
@@ -756,15 +839,19 @@ fun OperatorPanelScreen(
             }
         }
 
-        // Source Code & Implicit Intent Controls
+        // Repository & License Module
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("🧑‍💻 Academic Repository", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.Build, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Academic Repository", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "This open-source Android module is distributed under the official terms of the MIT License.",
                         color = Color(0xFF94A3B8),
@@ -772,18 +859,28 @@ fun OperatorPanelScreen(
                         lineHeight = 18.sp
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = {
-                            // Triggering Implicit Web Intent targeting GitHub repo [User Query]
-                            val intent = Intent(Intent.ACTION_VIEW,
-                                "https://github.com/coal517/AetherAudit".toUri())
-                            context.startActivity(intent)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0284C7)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("OPEN GITHUB SOURCE", color = Color.White)
-                    }
+                    Text(
+                        text = "https://github.com/coal517/AetherAudit",
+                        color = Color(0xFF0284C7), // Matches your original button color
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .combinedClickable(
+                                onClick = {
+                                    // Short click: Directly opens the URL using an implicit intent
+                                    val intent = Intent(Intent.ACTION_VIEW, "https://github.com/coal517/AetherAudit".toUri())
+                                    context.startActivity(intent)
+                                },
+                                onLongClick = {
+                                    // Long click: Displays a custom context menu
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, "https://github.com/coal517/AetherAudit")
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share Link Via"))
+                                }
+                            )
+                    )
                 }
             }
         }

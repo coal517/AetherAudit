@@ -53,10 +53,10 @@ fun OperatorPanelScreen(
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text("AETHER AUDIT", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            Text("Version 1.0.0 (MIT License)", color = Color(0xFF94A3B8), fontSize = 14.sp)
+            Text("Version 0.1.3 (MIT License)", color = Color(0xFF94A3B8), fontSize = 14.sp)
         }
 
-        // Active Profile Management Module [CLO2 Development of mobile solution]
+        // Active Profile Management Module
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -94,7 +94,7 @@ fun OperatorPanelScreen(
             }
         }
 
-        // Cyber-Resilience Manifesto [UN SDG Goal 9]
+        // Cyber-Resilience Manifesto
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -119,7 +119,7 @@ fun OperatorPanelScreen(
             }
         }
 
-        // Repository & License Module [User Query]
+        // Repository & License Module
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),

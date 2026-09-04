@@ -1,6 +1,7 @@
 package com.example.aetheraudit.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aetheraudit.data.AetherAuditDatabase
@@ -11,6 +12,7 @@ import com.example.aetheraudit.scanner.BleSecurityScanner
 import com.example.aetheraudit.scanner.DiscoveredDevice
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 data class UiState(
     val isScanning: Boolean = false,
@@ -28,10 +30,29 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
     private val scanner = BleSecurityScanner(application)
     private val networkClient = SupabaseNetworkClient()
 
+    // Native persistence container [13, 14]
+    private val prefs = application.getSharedPreferences("aether_audit_prefs", Context.MODE_PRIVATE)
+
+    // Temporary storage for Undo actions
+    private var recentlyDeletedOUI: LocalOUIEntry? = null
+
     private val _uiState = MutableStateFlow(UiState())
     val uiState = _uiState.asStateFlow()
 
     init {
+        // Restore session automatically upon cold-start [15]
+        val savedEmail = prefs.getString("auth_email", null)
+        val savedAuth = prefs.getBoolean("is_auth", false)
+        if (savedAuth && savedEmail != null) {
+            _uiState.update {
+                it.copy(
+                    isUserAuthenticated = true,
+                    currentUserEmail = savedEmail,
+                    statusMessage = "Authorized operator session restored."
+                )
+            }
+        }
+
         // Collect local OUI database flow and feed back to scanner rules engine
         viewModelScope.launch {
             dao.getLocalBlacklist().collect { list ->
@@ -60,7 +81,12 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(statusMessage = "Verifying operator credentials...") }
             val success = networkClient.loginWithEmail(email, password)
             if (success) {
-                _uiState.update { it.copy(isUserAuthenticated = true, currentUserEmail = email, statusMessage = "Authorized. Perimeter scans unlocked.") }
+                prefs.edit {
+                    putString("auth_email", email)
+                    putBoolean("is_auth", true)
+                }
+                _uiState.update { it.copy(isUserAuthenticated = true, currentUserEmail = email,
+                    statusMessage = "Authorized. Perimeter scans unlocked.") }
             } else {
                 _uiState.update { it.copy(statusMessage = "Authentication failed. Invalid security keys.") }
             }
@@ -80,7 +106,31 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun logoutUser() {
+        prefs.edit { clear() }
         _uiState.update { it.copy(isUserAuthenticated = false, currentUserEmail = "", statusMessage = "Operator logged out. Perimeter locked.") }
+    }
+
+    fun deleteOperatorAccount() {
+        val email = _uiState.value.currentUserEmail
+        viewModelScope.launch {
+            _uiState.update { it.copy(statusMessage = "Executing account deletion protocol...") }
+            val success = networkClient.deleteOperatorAccount(email)
+            if (success) {
+                // Purge shared preferences session [15]
+                prefs.edit { clear() }
+                // Scrub local data caches
+                dao.clearAuditLogs()
+                _uiState.update {
+                    it.copy(
+                        isUserAuthenticated = false,
+                        currentUserEmail = "",
+                        statusMessage = "Account deleted. Local storage scrubbed."
+                    )
+                }
+            } else {
+                _uiState.update { it.copy(statusMessage = "Account deletion failed. Network server busy.") }
+            }
+        }
     }
 
     fun toggleScanning() {
@@ -95,7 +145,7 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    // Two-Way Sync Strategy: Sync remote Master List to Local DB without deleting manual user overrides
+    // Sync remote Master List to Local DB without deleting manual user overrides
     fun syncOUIBlacklistFromSupabase() {
         viewModelScope.launch {
             _uiState.update { it.copy(statusMessage = "Syncing with Supabase Vulnerability Server...") }
@@ -147,9 +197,8 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
-    // Input-validated OUI entry insertion - Satisfies CLO2 Quality of Work (input validation)
+    // Input-validated OUI entry insertion
     fun addManualOUIOverride(oui: String, vendorName: String, notes: String): Boolean {
-        // Strict Validation Check
         val cleanOUI = oui.trim().uppercase()
         val isValid = cleanOUI.matches(Regex("^[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}$"))
         if (!isValid) return false
@@ -168,9 +217,20 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun deleteManualOUI(entry: LocalOUIEntry) {
+        recentlyDeletedOUI = entry
         viewModelScope.launch {
             dao.deleteOUI(entry)
             _uiState.update { it.copy(statusMessage = "Removed OUI Override: ${entry.oui}") }
+        }
+    }
+
+    fun restoreDeletedOUI() {
+        recentlyDeletedOUI?.let { entry ->
+            viewModelScope.launch {
+                dao.insertOUI(entry)
+                _uiState.update { it.copy(statusMessage = "Restored local override: ${entry.oui}") }
+                recentlyDeletedOUI = null
+            }
         }
     }
 

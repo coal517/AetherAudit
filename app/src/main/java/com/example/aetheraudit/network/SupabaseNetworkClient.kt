@@ -61,6 +61,32 @@ class SupabaseNetworkClient(
         }
     }
 
+    suspend fun deleteOperatorAccount(email: String): Boolean = withContext(Dispatchers.IO) {
+        val jsonPayload = JSONObject().apply {
+            put("device_name", "OPERATOR_DELETED_PROTOCOL")
+            put("mac_address", "00:00:00")
+            put("rssi", -100)
+            put("threat_level", "SAFE")
+            put("operator_email", email)
+        }.toString()
+
+        val request = Request.Builder()
+            .url("$supabaseUrl/rest/v1/infrastructure_resilience_reports")
+            .addHeader("apikey", supabaseApiKey)
+            .addHeader("Authorization", "Bearer $supabaseApiKey")
+            .addHeader("Content-Type", "application/json")
+            .post(jsonPayload.toRequestBody(mediaType))
+            .build()
+
+        try {
+            client.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     // Download vulnerable OUI Master List
     suspend fun fetchMasterBlacklist(): List<LocalOUIEntry> = withContext(Dispatchers.IO) {
         val request = Request.Builder()

@@ -6,16 +6,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.aetheraudit.R
 import com.example.aetheraudit.scanner.DiscoveredDevice
 import com.example.aetheraudit.scanner.ThreatLevel
 
@@ -36,20 +36,27 @@ fun LiveRadarScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Perimeter Scan Data", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.width(6.dp))
-                IconButton(onClick = onTutorialClick, modifier = Modifier.size(24.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Info, 
-                        contentDescription = "Show Scanner Guide", 
-                        tint = Color(0xFF38BDF8),
-                        modifier = Modifier.size(18.dp)
+                IconButton(onClick = onTutorialClick, modifier = Modifier.size(24.dp), colors = IconButtonDefaults.iconButtonColors(containerColor = Color(0xFF475569))) {
+                    Text(
+                        text = "?",
+                        color = Color(0xFF38BDF8),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
-            Button(
+            TextButton(
                 onClick = onToggleScan,
-                colors = ButtonDefaults.buttonColors(containerColor = if (isScanning) Color.Red else Color(0xFF0284C7))
+                colors = ButtonDefaults.textButtonColors(containerColor = if (isScanning) Color.Red else Color(0xFF0284C7))
             ) {
-                Text(if (isScanning) "STOP SCAN" else "START RADAR", color = Color.White)
+                Icon(
+                    painter = painterResource(id = R.drawable.bluetooth_searching),
+                    contentDescription = "Start/Stop Scan Radar",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.White,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (isScanning) "STOP" else "SCAN", color = Color.White)
             }
         }
 
@@ -104,7 +111,7 @@ fun DeviceThreatCard(device: DiscoveredDevice, onSaveLog: (DiscoveredDevice) -> 
             Text(device.vulnerabilityDetails, color = Color(0xFF94A3B8), fontSize = 12.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Signal strength: ${device.rssi} dBm", color = Color(0xFF64748B), fontSize = 12.sp)
+                Text("Signal strength: ${device.rssi} dBm", color = Color(0xFF73839A), fontSize = 12.sp)
                 Spacer(modifier = Modifier.weight(1f))
                 TextButton(onClick = { onSaveLog(device) }) {
                     Text("PUBLISH THREAT LOG", color = Color(0xFF38BDF8), fontSize = 12.sp)

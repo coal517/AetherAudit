@@ -42,17 +42,13 @@ fun BlacklistEditorScreen(
                 onClick = onSync,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Sync Icon",
-                        tint = Color.White
-                    )
-                    Text("CLOUD SYNC", color = Color.White)
-                }
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Sync Icon",
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("CLOUD SYNC", color = Color.White)
             }
         }
 

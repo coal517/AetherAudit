@@ -31,7 +31,7 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
     private val scanner = BleSecurityScanner(application)
     private val networkClient = SupabaseNetworkClient()
 
-    // Native persistence container [13, 14]
+    // Native persistence container
     private val prefs = application.getSharedPreferences("aether_audit_prefs", Context.MODE_PRIVATE)
 
     // Temporary storage for Undo actions
@@ -41,7 +41,7 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
     val uiState = _uiState.asStateFlow()
 
     init {
-        // Restore session automatically upon cold-start [15]
+        // Restore session automatically upon cold-start
         val savedEmail = prefs.getString("auth_email", null)
         val savedAuth = prefs.getBoolean("is_auth", false)
         val savedUserId = prefs.getString("auth_user_id", "") ?: ""
@@ -133,7 +133,7 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(statusMessage = "Executing account deletion protocol...") }
             val success = networkClient.deleteOperatorAccount(userId)
             if (success) {
-                // Purge shared preferences session [15]
+                // Purge shared preferences session
                 prefs.edit { clear() }
                 // Scrub local data caches
                 dao.clearAuditLogs()

@@ -1,9 +1,7 @@
 package com.example.aetheraudit.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import com.example.aetheraudit.R
 
 @Composable
 fun OperatorPanelScreen(
@@ -41,14 +40,13 @@ fun OperatorPanelScreen(
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(Color(0xFF1E293B), RoundedCornerShape(20.dp)),
+                    .background(Color(0xFF4F6AD8), RoundedCornerShape(20.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Lock, 
-                    contentDescription = "Security Badge", 
-                    modifier = Modifier.size(40.dp),
-                    tint = Color(0xFF38BDF8)
+                    painter = painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = "App Icon",
+                    modifier = Modifier.size(72.dp)
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))

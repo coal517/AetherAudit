@@ -17,7 +17,9 @@ class SupabaseNetworkClient(
     private val client = OkHttpClient()
     private val mediaType = "application/json; charset=utf-8".toMediaType()
 
-    suspend fun loginWithEmail(email: String, password: String): Boolean = withContext(Dispatchers.IO) {
+    // Authenticate User via Supabase GoTrue REST endpoint
+    // Returns User ID on success to link with profile trigger deletions! Fixes authentication [User Query]
+    suspend fun loginWithEmail(email: String, password: String): String? = withContext(Dispatchers.IO) {
         val jsonPayload = JSONObject().apply {
             put("email", email)
             put("password", password)
@@ -32,13 +34,21 @@ class SupabaseNetworkClient(
 
         try {
             client.newCall(request).execute().use { response ->
-                response.isSuccessful
+                if (response.isSuccessful) {
+                    val body = response.body?.string() ?: ""
+                    val json = JSONObject(body)
+                    val userObj = json.optJSONObject("user")
+                    userObj?.optString("id")
+                } else {
+                    null
+                }
             }
         } catch (e: Exception) {
-            false
+            null
         }
     }
 
+    // Sign up new operator account
     suspend fun signUpWithEmail(email: String, password: String): Boolean = withContext(Dispatchers.IO) {
         val jsonPayload = JSONObject().apply {
             put("email", email)
@@ -61,21 +71,13 @@ class SupabaseNetworkClient(
         }
     }
 
-    suspend fun deleteOperatorAccount(email: String): Boolean = withContext(Dispatchers.IO) {
-        val jsonPayload = JSONObject().apply {
-            put("device_name", "OPERATOR_DELETED_PROTOCOL")
-            put("mac_address", "00:00:00")
-            put("rssi", -100)
-            put("threat_level", "SAFE")
-            put("operator_email", email)
-        }.toString()
-
+    // Delete Operator Profile row from 'profiles' table which cascades to auth.users server-side safely via secure trigger! Fixes deletion bug [User Query]
+    suspend fun deleteOperatorAccount(userId: String): Boolean = withContext(Dispatchers.IO) {
         val request = Request.Builder()
-            .url("$supabaseUrl/rest/v1/infrastructure_resilience_reports")
+            .url("$supabaseUrl/rest/v1/profiles?id=eq.$userId")
             .addHeader("apikey", supabaseApiKey)
             .addHeader("Authorization", "Bearer $supabaseApiKey")
-            .addHeader("Content-Type", "application/json")
-            .post(jsonPayload.toRequestBody(mediaType))
+            .delete()
             .build()
 
         try {

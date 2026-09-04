@@ -21,7 +21,8 @@ data class UiState(
     val auditLogs: List<AuditLogEntry> = emptyList(),
     val statusMessage: String = "Engine Idle. Ready to audit physical perimeter.",
     val isUserAuthenticated: Boolean = false,
-    val currentUserEmail: String = ""
+    val currentUserEmail: String = "",
+    val currentUserId: String = "" // Holds authenticated Supabase User UUID for secure profile cascading deletions [User Query]
 )
 
 class AetherAuditViewModel(application: Application) : AndroidViewModel(application) {
@@ -43,11 +44,13 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
         // Restore session automatically upon cold-start [15]
         val savedEmail = prefs.getString("auth_email", null)
         val savedAuth = prefs.getBoolean("is_auth", false)
+        val savedUserId = prefs.getString("auth_user_id", "") ?: ""
         if (savedAuth && savedEmail != null) {
             _uiState.update {
                 it.copy(
                     isUserAuthenticated = true,
                     currentUserEmail = savedEmail,
+                    currentUserId = savedUserId,
                     statusMessage = "Authorized operator session restored."
                 )
             }
@@ -79,14 +82,21 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
     fun authenticateUser(email: String, password: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(statusMessage = "Verifying operator credentials...") }
-            val success = networkClient.loginWithEmail(email, password)
-            if (success) {
+            val userId = networkClient.loginWithEmail(email, password)
+            if (userId != null) {
                 prefs.edit {
                     putString("auth_email", email)
+                    putString("auth_user_id", userId)
                     putBoolean("is_auth", true)
                 }
-                _uiState.update { it.copy(isUserAuthenticated = true, currentUserEmail = email,
-                    statusMessage = "Authorized. Perimeter scans unlocked.") }
+                _uiState.update {
+                    it.copy(
+                        isUserAuthenticated = true,
+                        currentUserEmail = email,
+                        currentUserId = userId,
+                        statusMessage = "Authorized. Perimeter scans unlocked."
+                    )
+                }
             } else {
                 _uiState.update { it.copy(statusMessage = "Authentication failed. Invalid security keys.") }
             }
@@ -98,7 +108,7 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
             _uiState.update { it.copy(statusMessage = "Registering operator secure profile...") }
             val success = networkClient.signUpWithEmail(email, password)
             if (success) {
-                _uiState.update { it.copy(statusMessage = "Account registered! You can now authenticate.") }
+                _uiState.update { it.copy(statusMessage = "Account registered! Confirm your email via the link sent to your inbox.") }
             } else {
                 _uiState.update { it.copy(statusMessage = "Registration failed. Choose robust credentials.") }
             }
@@ -107,14 +117,21 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
 
     fun logoutUser() {
         prefs.edit { clear() }
-        _uiState.update { it.copy(isUserAuthenticated = false, currentUserEmail = "", statusMessage = "Operator logged out. Perimeter locked.") }
+        _uiState.update {
+            it.copy(
+                isUserAuthenticated = false,
+                currentUserEmail = "",
+                currentUserId = "",
+                statusMessage = "Operator logged out. Perimeter locked."
+            )
+        }
     }
 
     fun deleteOperatorAccount() {
-        val email = _uiState.value.currentUserEmail
+        val userId = _uiState.value.currentUserId
         viewModelScope.launch {
             _uiState.update { it.copy(statusMessage = "Executing account deletion protocol...") }
-            val success = networkClient.deleteOperatorAccount(email)
+            val success = networkClient.deleteOperatorAccount(userId)
             if (success) {
                 // Purge shared preferences session [15]
                 prefs.edit { clear() }
@@ -124,6 +141,7 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
                     it.copy(
                         isUserAuthenticated = false,
                         currentUserEmail = "",
+                        currentUserId = "",
                         statusMessage = "Account deleted. Local storage scrubbed."
                     )
                 }
@@ -135,13 +153,32 @@ class AetherAuditViewModel(application: Application) : AndroidViewModel(applicat
 
     fun toggleScanning() {
         val scanning = !_uiState.value.isScanning
-        _uiState.update { it.copy(isScanning = scanning) }
         if (scanning) {
-            _uiState.update { it.copy(statusMessage = "Scanning active. Mapping BLE perimeter...") }
-            scanner.startScanning()
+            val started = scanner.startScanning()
+            if (started) {
+                _uiState.update {
+                    it.copy(
+                        isScanning = true,
+                        statusMessage = "Scanning active. Mapping BLE perimeter..."
+                    )
+                }
+            } else {
+                // Bluetooth off or not initialized. Guides the user beautifully [User Query]
+                _uiState.update {
+                    it.copy(
+                        isScanning = false,
+                        statusMessage = "Scan blocked! Enable Bluetooth in device settings, then try again."
+                    )
+                }
+            }
         } else {
-            _uiState.update { it.copy(statusMessage = "Scanner idle. Results buffered.") }
             scanner.stopScanning()
+            _uiState.update {
+                it.copy(
+                    isScanning = false,
+                    statusMessage = "Scanner idle. Results buffered."
+                )
+            }
         }
     }
 

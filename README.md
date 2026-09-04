@@ -57,7 +57,7 @@ The application enforces authentication using **Supabase GoTrue REST** endpoints
 
 ## 🚀 Installation & Build Requirements
 
-* **Operating System Support:** Android 8.0+ (API Level 26) up to Android 15.0 (API Level 35).
+* **Operating System Support:** Android 8.0+ (API Level 26) up to Android 17.0 (API Level 37).
 * **Hardware Requirements:** Must be executed on a physical Android device. *Emulators do not natively support BLE scanning controllers.*
 * **Required Build Tools:**
   * Android Studio Ladybug (or newer)

@@ -25,8 +25,10 @@ data class DiscoveredDevice(
 
 class BleSecurityScanner(private val context: Context) {
     private val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
-    private val bleScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
+    
+    // Dynamic getters to re-evaluate state at runtime. Prevents null scanners when Bluetooth is toggled [User Query]
+    private val bluetoothAdapter: BluetoothAdapter? get() = bluetoothManager.adapter
+    private val bleScanner: BluetoothLeScanner? get() = bluetoothAdapter?.bluetoothLeScanner
 
     private val _scannedDevices = MutableStateFlow<Map<String, DiscoveredDevice>>(emptyMap())
     val scannedDevices = _scannedDevices.asStateFlow()
@@ -76,13 +78,33 @@ class BleSecurityScanner(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun startScanning() {
+    fun startScanning(): Boolean {
         _scannedDevices.value = emptyMap()
-        bleScanner?.startScan(scanCallback)
+        try {
+            val adapter = bluetoothAdapter
+            if (adapter == null || !adapter.isEnabled) {
+                return false // Bluetooth antenna is turned OFF on device system-level
+            }
+            
+            // Re-fetch scanner dynamically. If user turned on Bluetooth after app launch, this will now be non-null!
+            val scanner = bleScanner ?: return false
+            scanner.startScan(scanCallback)
+            return true
+        } catch (e: SecurityException) {
+            // Fails if runtime Bluetooth scan permissions were denied by the user [User Query]
+            return false
+        } catch (e: Exception) {
+            return false
+        }
     }
 
     @SuppressLint("MissingPermission")
     fun stopScanning() {
-        bleScanner?.stopScan(scanCallback)
+        try {
+            // Defensive try-catch blocks prevent crashing when stopping scan during hardware configuration changes [User Query]
+            bleScanner?.stopScan(scanCallback)
+        } catch (e: Exception) {
+            // Ignore hardware teardown crashes
+        }
     }
 }
